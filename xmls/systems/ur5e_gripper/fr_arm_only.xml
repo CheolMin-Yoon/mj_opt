@@ -1,0 +1,128 @@
+<mujoco model="fr_arm_only">
+  <compiler angle="radian" autolimits="true" />
+
+  <option integrator="implicitfast" timestep="0.002"/>
+
+  <default>
+    <default class="arm">
+      <material specular="0.5" shininess="0.25"/>
+      <joint armature="0.1"/>
+      <general gaintype="fixed" biastype="affine" gainprm="2000" biasprm="0 -2000 -400"/>
+      <default class="size3">
+        <joint range="-6.28319 6.28319"/>
+        <general ctrlrange="-6.2831 6.2831" forcerange="-150 150"/>
+        <default class="size3_limited">
+          <joint range="-3.1415 3.1415"/>
+          <general ctrlrange="-3.1415 3.1415" forcerange="-150 150"/>
+        </default>
+      </default>
+      <default class="size1">
+        <joint range="-6.28319 6.28319"/>
+        <general gainprm="500" biasprm="0 -500 -100" ctrlrange="-6.2831 6.2831" forcerange="-28 28"/>
+      </default>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3"/>
+      </default>
+    </default>
+  </default>
+
+  <asset>
+    <mesh name="base"      file="../../robots/ur5e/meshes/base.stl"      scale="0.001 0.001 0.001"/>
+    <mesh name="shoulder"   file="../../robots/ur5e/meshes/shoulder.stl"   scale="0.001 0.001 0.001"/>
+    <mesh name="upperarm"   file="../../robots/ur5e/meshes/upperarm.stl"   scale="0.001 0.001 0.001"/>
+    <mesh name="forearm"    file="../../robots/ur5e/meshes/forearm.stl"    scale="0.001 0.001 0.001"/>
+    <mesh name="wrist1"     file="../../robots/ur5e/meshes/wrist1.stl"     scale="0.001 0.001 0.001"/>
+    <mesh name="wrist2"     file="../../robots/ur5e/meshes/wrist2.stl"     scale="0.001 0.001 0.001"/>
+
+    <material name="arm_dark"   rgba="0.15 0.15 0.15 1" specular="0.3" shininess="0.5"/>
+    <material name="arm_metal"  rgba="0.6 0.6 0.65 1"   specular="0.7" shininess="0.8"/>
+  </asset>
+
+  <worldbody>
+    <light name="spotlight" mode="targetbodycom" target="wrist_2_link" pos="0 -1 2"/>
+
+    <body name="base" childclass="arm">
+      <inertial mass="4.0" pos="0 0 0" diaginertia="0.00443333156 0.00443333156 0.0072"/>
+      <geom mesh="base" material="arm_dark" class="visual"/>
+
+      <body name="shoulder_link" pos="0 0 0.0596">
+        <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102675 0.0102675 0.00666"/>
+        <joint name="shoulder_pan_joint" class="size3" axis="0 0 1" range="-6.28319 6.28319"/>
+        <geom mesh="shoulder" material="arm_metal" class="visual"/>
+        <geom class="collision" size="0.06 0.06" pos="0 0 -0.04"/>
+
+        <body name="upper_arm_link" pos="0 -0.0606 0.08">
+          <inertial mass="8.393" pos="0 0 0" diaginertia="0.133886 0.133886 0.0151074"/>
+          <joint name="shoulder_lift_joint" class="size3" axis="0 1 0" range="-6.28319 6.28319"/>
+          <geom mesh="upperarm" material="arm_metal" class="visual"/>
+          <geom class="collision" size="0.05 0.1" pos="0 0 0.1"/>
+
+          <body name="forearm_link" pos="0 0 0.215">
+            <inertial mass="2.275" pos="0 0 0" diaginertia="0.0312094 0.0312094 0.004095"/>
+            <joint name="elbow_joint" class="size3_limited" axis="0 1 0" range="-3.1415 3.1415"/>
+            <geom mesh="forearm" material="arm_metal" class="visual"/>
+            <geom class="collision" size="0.038 0.1" pos="0 0 0.1"/>
+
+            <body name="wrist_1_link" pos="0 -0.001 0.215">
+              <inertial mass="1.219" pos="0 0 0" diaginertia="0.0025599 0.0025599 0.0021942"/>
+              <joint name="wrist_1_joint" class="size1" axis="0 1 0" range="-6.28319 6.28319"/>
+              <geom mesh="wrist1" material="arm_metal" class="visual"/>
+              <geom class="collision" size="0.04 0.04" pos="0 -0.02 0"/>
+
+              <body name="wrist_2_link" pos="0 -0.0425 0.0375">
+                <inertial mass="1.219" pos="0 0 0" diaginertia="0.0025599 0.0025599 0.0021942"/>
+                <joint name="wrist_2_joint" class="size1" axis="0 0 1" range="-6.28319 6.28319"/>
+                <geom mesh="wrist2" material="arm_metal" class="visual"/>
+                <geom class="collision" size="0.04 0.04" pos="0 0 0.02"/>
+
+                <body name="wrist_3_link" pos="0.0375 0 0.043">
+                  <inertial mass="0.1" pos="0 0 0" diaginertia="0.0001 0.0001 0.0001"/>
+                  <joint name="wrist_3_joint" class="size1" axis="1 0 0" range="-6.28319 6.28319"/>
+<site name="tool0" pos="0 0 0" size="0.005" rgba="1 0 0 1"/>
+                </body> <!-- wrist_3_link -->
+
+              </body> <!-- wrist_2_link -->
+            </body> <!-- wrist_1_link -->
+          </body> <!-- forearm_link -->
+        </body> <!-- upper_arm_link -->
+      </body> <!-- shoulder_link -->
+    </body> <!-- base -->
+  </worldbody>
+
+  <actuator>
+    <general class="size3" name="shoulder_pan" joint="shoulder_pan_joint"/>
+    <general class="size3" name="shoulder_lift" joint="shoulder_lift_joint"/>
+    <general class="size3_limited" name="elbow" joint="elbow_joint"/>
+    <general class="size1" name="wrist_1" joint="wrist_1_joint"/>
+    <general class="size1" name="wrist_2" joint="wrist_2_joint"/>
+    <general class="size1" name="wrist_3" joint="wrist_3_joint"/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="jp_shoulder_pan"  joint="shoulder_pan_joint"/>
+    <jointpos name="jp_shoulder_lift" joint="shoulder_lift_joint"/>
+    <jointpos name="jp_elbow"         joint="elbow_joint"/>
+    <jointpos name="jp_wrist_1"       joint="wrist_1_joint"/>
+    <jointpos name="jp_wrist_2"       joint="wrist_2_joint"/>
+    <jointpos name="jp_wrist_3"       joint="wrist_3_joint"/>
+    <jointvel name="jv_shoulder_pan"  joint="shoulder_pan_joint"/>
+    <jointvel name="jv_shoulder_lift" joint="shoulder_lift_joint"/>
+    <jointvel name="jv_elbow"         joint="elbow_joint"/>
+    <jointvel name="jv_wrist_1"       joint="wrist_1_joint"/>
+    <jointvel name="jv_wrist_2"       joint="wrist_2_joint"/>
+    <jointvel name="jv_wrist_3"       joint="wrist_3_joint"/>
+    <framepos name="tool0_pos" objtype="site" objname="tool0"/>
+  </sensor>
+
+  <keyframe>
+    <key name="home"
+      qpos="0 -0.033929 1.613522 0.033929 0.033929 -1.528071"
+      ctrl="0 -0.033929 1.613522 0.033929 0.033929 -1.528071"/>
+    <key name="pre_grasp"
+      qpos="0 -0.31415 1.8852 0 0 -1.57075"
+      ctrl="0 -0.31415 1.8852 0 0 -1.57075"/>
+  </keyframe>
+</mujoco>

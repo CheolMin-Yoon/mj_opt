@@ -1,0 +1,256 @@
+<mujoco model="fr_arm_with_hand">
+  <compiler angle="radian" autolimits="true" />
+
+  <option integrator="implicitfast" timestep="0.002"/>
+
+  <default>
+    <default class="arm">
+      <material specular="0.5" shininess="0.25"/>
+      <joint armature="0.1"/>
+      <general gaintype="fixed" biastype="affine" gainprm="2000" biasprm="0 -2000 -400"/>
+      <default class="size3">
+        <joint range="-6.28319 6.28319"/>
+        <general ctrlrange="-6.2831 6.2831" forcerange="-150 150"/>
+        <default class="size3_limited">
+          <joint range="-3.1415 3.1415"/>
+          <general ctrlrange="-3.1415 3.1415" forcerange="-150 150"/>
+        </default>
+      </default>
+      <default class="size1">
+        <joint range="-6.28319 6.28319"/>
+        <general gainprm="500" biasprm="0 -500 -100" ctrlrange="-6.2831 6.2831" forcerange="-28 28"/>
+      </default>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3"/>
+      </default>
+    </default>
+    <default class="gripper">
+      <joint armature="0.01" damping="0.05"/>
+      <geom type="mesh" contype="1" conaffinity="1" friction="1.0 0.005 0.001" group="2"/>
+      <general gaintype="fixed" biastype="affine" gainprm="50" biasprm="0 -50 -5" forcerange="-10 10"/>
+    </default>
+  </default>
+
+  <asset>
+    <mesh name="base"      file="../../robots/ur5e/meshes/base.stl"      scale="0.001 0.001 0.001"/>
+    <mesh name="shoulder"   file="../../robots/ur5e/meshes/shoulder.stl"   scale="0.001 0.001 0.001"/>
+    <mesh name="upperarm"   file="../../robots/ur5e/meshes/upperarm.stl"   scale="0.001 0.001 0.001"/>
+    <mesh name="forearm"    file="../../robots/ur5e/meshes/forearm.stl"    scale="0.001 0.001 0.001"/>
+    <mesh name="wrist1"     file="../../robots/ur5e/meshes/wrist1.stl"     scale="0.001 0.001 0.001"/>
+    <mesh name="wrist2"     file="../../robots/ur5e/meshes/wrist2.stl"     scale="0.001 0.001 0.001"/>
+    <mesh name="palm2"                 file="../../robots/grippers/meshes/palm2.stl"                 scale="0.001 0.001 0.001"/>
+    <mesh name="mid_finger_palm_joint" file="../../robots/grippers/meshes/mid_finger_palm_joint.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="two_finger_palm_joint" file="../../robots/grippers/meshes/two_finger_palm_joint.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="two_finger"            file="../../robots/grippers/meshes/two_finger.stl"            scale="0.001 0.001 0.001"/>
+    <mesh name="two_finger_tip"        file="../../robots/grippers/meshes/two_finger_tip.stl"        scale="0.001 0.001 0.001"/>
+
+    <material name="arm_dark"   rgba="0.15 0.15 0.15 1" specular="0.3" shininess="0.5"/>
+    <material name="arm_metal"  rgba="0.6 0.6 0.65 1"   specular="0.7" shininess="0.8"/>
+    <material name="gripper_dark"     rgba="0.15 0.15 0.15 1" specular="0.3" shininess="0.5"/>
+    <material name="gripper_metal"    rgba="0.6 0.6 0.65 1"   specular="0.7" shininess="0.8"/>
+    <material name="fingertip_rubber" rgba="0.2 0.2 0.2 1"    specular="0.1" shininess="0.1"/>
+  </asset>
+
+  <worldbody>
+    <light name="spotlight" mode="targetbodycom" target="wrist_2_link" pos="0 -1 2"/>
+
+    <!-- 6DOF Arm + Gripper (URDF→MJCF 변환 기반, 관절 구조 정확) -->
+    <body name="base" childclass="arm">
+      <inertial mass="4.0" pos="0 0 0" diaginertia="0.00443333156 0.00443333156 0.0072"/>
+      <geom mesh="base" material="arm_dark" class="visual"/>
+
+      <body name="shoulder_link" pos="0 0 0.0596">
+        <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102675 0.0102675 0.00666"/>
+        <joint name="shoulder_pan_joint" class="size3" axis="0 0 1" range="-6.28319 6.28319"/>
+        <geom mesh="shoulder" material="arm_metal" class="visual"/>
+        <geom class="collision" size="0.06 0.06" pos="0 0 -0.04"/>
+
+        <body name="upper_arm_link" pos="0 -0.0606 0.08">
+          <inertial mass="8.393" pos="0 0 0" diaginertia="0.133886 0.133886 0.0151074"/>
+          <joint name="shoulder_lift_joint" class="size3" axis="0 1 0" range="-6.28319 6.28319"/>
+          <geom mesh="upperarm" material="arm_metal" class="visual"/>
+          <geom class="collision" size="0.05 0.1" pos="0 0 0.1"/>
+
+          <body name="forearm_link" pos="0 0 0.215">
+            <inertial mass="2.275" pos="0 0 0" diaginertia="0.0312094 0.0312094 0.004095"/>
+            <joint name="elbow_joint" class="size3_limited" axis="0 1 0" range="-3.1415 3.1415"/>
+            <geom mesh="forearm" material="arm_metal" class="visual"/>
+            <geom class="collision" size="0.038 0.1" pos="0 0 0.1"/>
+
+            <body name="wrist_1_link" pos="0 -0.001 0.215">
+              <inertial mass="1.219" pos="0 0 0" diaginertia="0.0025599 0.0025599 0.0021942"/>
+              <joint name="wrist_1_joint" class="size1" axis="0 1 0" range="-6.28319 6.28319"/>
+              <geom mesh="wrist1" material="arm_metal" class="visual"/>
+              <geom class="collision" size="0.04 0.04" pos="0 -0.02 0"/>
+
+              <body name="wrist_2_link" pos="0 -0.0425 0.0375">
+                <inertial mass="1.219" pos="0 0 0" diaginertia="0.0025599 0.0025599 0.0021942"/>
+                <joint name="wrist_2_joint" class="size1" axis="0 0 1" range="-6.28319 6.28319"/>
+                <geom mesh="wrist2" material="arm_metal" class="visual"/>
+                <geom class="collision" size="0.04 0.04" pos="0 0 0.02"/>
+
+                <!-- gripper_palm: wrist_3_joint (X축 회전) -->
+                <body name="gripper_palm" pos="0.0375 0 0.043" childclass="gripper">
+                  <inertial mass="0.2" pos="0 0 0" diaginertia="0.0001 0.0001 0.0001"/>
+                  <joint name="wrist_3_joint" class="size1" axis="1 0 0" range="-6.28319 6.28319"/>
+                  <geom mesh="palm2" material="gripper_dark"/>
+                  <site name="attachment_site" pos="0 0 0"/>
+                  <site name="grasp_site" pos="0.15 0 0" size="0.005" rgba="1 1 0 0.9"/>
+
+                  <!-- CENTER FINGER (URDF 변환: quat="0.5 -0.5 -0.5 0.5") -->
+                  <body name="center_palm" pos="0.045 0.0255 0" quat="0.5 -0.5 -0.5 0.5">
+                    <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                    <joint name="center_palm_joint" axis="0 0 1" range="-1.5708 1.5708"/>
+                    <geom mesh="mid_finger_palm_joint" material="gripper_dark"/>
+                    <body name="center_upper_finger" pos="0.036 0 -0.00825">
+                      <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                      <joint name="center_upper_finger_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                      <geom mesh="two_finger" material="gripper_metal"/>
+                      <body name="center_lower_finger" pos="0 0 -0.0455">
+                        <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                        <joint name="center_lower_finger_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                        <geom mesh="two_finger" material="gripper_metal"/>
+                        <body name="center_fingertip" pos="0 0 -0.0455">
+                          <inertial mass="0.02" pos="0 0 0" diaginertia="1e-06 1e-06 1e-06"/>
+                          <joint name="center_fingertip_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                          <geom name="center_fingertip_geom" mesh="two_finger_tip" material="fingertip_rubber"/>
+                          <site name="center_touch" pos="0 0 -0.02" size="0.008" rgba="1 0 0 0.3"/>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+
+                  <!-- LEFT FINGER -->
+                  <body name="left_palm" pos="0.045 -0.0175 0.0245" quat="0.5 -0.5 -0.5 0.5">
+                    <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                    <joint name="left_palm_joint" axis="0 0 1" range="-1.5708 1.5708"/>
+                    <geom mesh="two_finger_palm_joint" material="gripper_dark"/>
+                    <body name="left_upper_finger" pos="-0.036 0 -0.00825" quat="0 0 0 1">
+                      <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                      <joint name="left_upper_finger_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                      <geom mesh="two_finger" material="gripper_metal"/>
+                      <body name="left_lower_finger" pos="0 0 -0.0455">
+                        <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                        <joint name="left_lower_finger_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                        <geom mesh="two_finger" material="gripper_metal"/>
+                        <body name="left_fingertip" pos="0 0 -0.0455">
+                          <inertial mass="0.02" pos="0 0 0" diaginertia="1e-06 1e-06 1e-06"/>
+                          <joint name="left_fingertip_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                          <geom name="left_fingertip_geom" mesh="two_finger_tip" material="fingertip_rubber"/>
+                          <site name="left_touch" pos="0 0 -0.02" size="0.008" rgba="1 0 0 0.3"/>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+
+                  <!-- RIGHT FINGER -->
+                  <body name="right_palm" pos="0.045 -0.0175 -0.0245" quat="0.5 -0.5 -0.5 0.5">
+                    <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                    <joint name="right_palm_joint" axis="0 0 1" range="-1.5708 1.5708"/>
+                    <geom mesh="two_finger_palm_joint" material="gripper_dark"/>
+                    <body name="right_upper_finger" pos="-0.036 0 -0.00825" quat="0 0 0 1">
+                      <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                      <joint name="right_upper_finger_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                      <geom mesh="two_finger" material="gripper_metal"/>
+                      <body name="right_lower_finger" pos="0 0 -0.0455">
+                        <inertial mass="0.05" pos="0 0 0" diaginertia="1e-05 1e-05 1e-05"/>
+                        <joint name="right_lower_finger_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                        <geom mesh="two_finger" material="gripper_metal"/>
+                        <body name="right_fingertip" pos="0 0 -0.0455">
+                          <inertial mass="0.02" pos="0 0 0" diaginertia="1e-06 1e-06 1e-06"/>
+                          <joint name="right_fingertip_joint" axis="0 1 0" range="-1.5708 1.5708"/>
+                          <geom name="right_fingertip_geom" mesh="two_finger_tip" material="fingertip_rubber"/>
+                          <site name="right_touch" pos="0 0 -0.02" size="0.008" rgba="1 0 0 0.3"/>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+
+                </body> <!-- gripper_palm -->
+              </body> <!-- wrist_2_link -->
+            </body> <!-- wrist_1_link -->
+          </body> <!-- forearm_link -->
+        </body> <!-- upper_arm_link -->
+      </body> <!-- shoulder_link -->
+    </body> <!-- base -->
+  </worldbody>
+
+  <actuator>
+    <general class="size3" name="shoulder_pan" joint="shoulder_pan_joint"/>
+    <general class="size3" name="shoulder_lift" joint="shoulder_lift_joint"/>
+    <general class="size3_limited" name="elbow" joint="elbow_joint"/>
+    <general class="size1" name="wrist_1" joint="wrist_1_joint"/>
+    <general class="size1" name="wrist_2" joint="wrist_2_joint"/>
+    <general class="size1" name="wrist_3" joint="wrist_3_joint"/>
+    <general class="gripper" name="center_palm_act"         joint="center_palm_joint"         ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="center_upper_finger_act" joint="center_upper_finger_joint" ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="center_lower_finger_act" joint="center_lower_finger_joint" ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="center_fingertip_act"    joint="center_fingertip_joint"    ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="left_palm_act"           joint="left_palm_joint"           ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="left_upper_finger_act"   joint="left_upper_finger_joint"   ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="left_lower_finger_act"   joint="left_lower_finger_joint"   ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="left_fingertip_act"      joint="left_fingertip_joint"      ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="right_palm_act"          joint="right_palm_joint"          ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="right_upper_finger_act"  joint="right_upper_finger_joint"  ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="right_lower_finger_act"  joint="right_lower_finger_joint"  ctrlrange="-1.5708 1.5708"/>
+    <general class="gripper" name="right_fingertip_act"     joint="right_fingertip_joint"     ctrlrange="-1.5708 1.5708"/>
+  </actuator>
+
+  <sensor>
+    <touch name="center_touch_sensor" site="center_touch"/>
+    <touch name="left_touch_sensor"   site="left_touch"/>
+    <touch name="right_touch_sensor"  site="right_touch"/>
+    <force name="ee_force"  site="attachment_site"/>
+    <torque name="ee_torque" site="attachment_site"/>
+    <jointpos name="jp_shoulder_pan"  joint="shoulder_pan_joint"/>
+    <jointpos name="jp_shoulder_lift" joint="shoulder_lift_joint"/>
+    <jointpos name="jp_elbow"         joint="elbow_joint"/>
+    <jointpos name="jp_wrist_1"       joint="wrist_1_joint"/>
+    <jointpos name="jp_wrist_2"       joint="wrist_2_joint"/>
+    <jointpos name="jp_wrist_3"       joint="wrist_3_joint"/>
+    <jointvel name="jv_shoulder_pan"  joint="shoulder_pan_joint"/>
+    <jointvel name="jv_shoulder_lift" joint="shoulder_lift_joint"/>
+    <jointvel name="jv_elbow"         joint="elbow_joint"/>
+    <jointvel name="jv_wrist_1"       joint="wrist_1_joint"/>
+    <jointvel name="jv_wrist_2"       joint="wrist_2_joint"/>
+    <jointvel name="jv_wrist_3"       joint="wrist_3_joint"/>
+  </sensor>
+
+  <keyframe>
+    <key name="home"
+      qpos="0 -0.033929 1.613522 0.033929 0.033929 -1.528071
+             -0.008482 0.001885 -0.004712 -0.008482  -0.004712 0.0 0.0 0.059376  -0.042412 -0.003770 -0.042412 0.0
+             -0.10 0.25 0.05  1 0 0 0
+             0.10 0.25 0.03  1 0 0 0
+             -0.05 0.30 0.03  1 0 0 0"
+      ctrl="0 -0.033929 1.613522 0.033929 0.033929 -1.528071
+             -0.008482 0.001885 -0.004712 -0.008482  -0.004712 0.0 0.0 0.059376  -0.042412 -0.003770 -0.042412 0.0"/>
+    <key name="pre_grasp"
+      qpos="0 -0.31415 1.8852 0 0 -1.57075
+             0 0 0 0  0 0 0 0  0 0 0 0
+             -0.10 0.25 0.05  1 0 0 0
+             0.10 0.25 0.03  1 0 0 0
+             -0.05 0.30 0.03  1 0 0 0"
+      ctrl="0 -0.31415 1.8852 0 0 -1.57075
+             0 0 0 0  0 0 0 0  0 0 0 0"/>
+    <key name="2_finger_mode"
+      qpos="0 -0.31415 1.8852 0 0 -1.57075
+             0 0 0 0  0 0 0 0  0 0 0 0
+             -0.10 0.25 0.05  1 0 0 0
+             0.10 0.25 0.03  1 0 0 0
+             -0.05 0.30 0.03  1 0 0 0"
+      ctrl="0 -0.31415 1.8852 0 0 -1.57075
+             0 0 0 0  0 0 0 0  0 0 0 0"/>
+    <key name="3_finger_mode"
+      qpos="0 -0.31415 1.8852 0 0 -1.57075
+             0 0 0 0  0 0 0 0  0 0 0 0
+             -0.10 0.25 0.05  1 0 0 0
+             0.10 0.25 0.03  1 0 0 0
+             -0.05 0.30 0.03  1 0 0 0"
+      ctrl="0 -0.31415 1.8852 0 0 -1.57075
+             0 0 0 0  0 0 0 0  0 0 0 0"/>
+  </keyframe>
+</mujoco>
