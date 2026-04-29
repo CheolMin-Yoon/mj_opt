@@ -18,6 +18,8 @@ class Pinocchio_Wrapper:
         self.cmodel = robot.collision_model
         self.data = self.model.createData()
         self.nv = self.model.nv
+        self.na = self.model.nv - 6   # actuated joints (floating base 6 제외)
+        self.mass = pin.computeTotalMass(self.model)
         self.current_state = FloatingBaseRobotState()
         
         # 딕셔너리에 의존성 존재
@@ -66,6 +68,7 @@ class Pinocchio_Wrapper:
         pin.computeJointJacobiansTimeVariation(self.model, self.data, q, dq)
         pin.ccrba(self.model, self.data, q, dq)
         pin.centerOfMass(self.model, self.data, q, dq)
+        pin.computeTotalMass(self.model)
 
         # world_T_base 업데이트
         self.oMb = self.data.oMf[self.fid["base"]]   
@@ -152,3 +155,17 @@ class Pinocchio_Wrapper:
         oMf = self.data.oMf[fid].copy()
         twist = pin.getFrameVelocity(self.model, self.data, fid, pin.ReferenceFrame.LOCAL_WORLD_ALIGNED)
         return oMf, twist.linear.copy(), twist.angular.copy()
+    
+    # 
+    def world_to_base_frame(self, pos_world):
+        """world 좌표계 pos → base local frame pos."""
+        return self.R_world_to_body @ (pos_world - self.oMb.translation)
+    
+    # (N, 3) world 궤적 → base frame 궤적
+    def trajectory_world_to_base(self, traj_world):
+        p_base = self.oMb.translation
+        R_wb   = self.R_world_to_body
+        return (traj_world - p_base) @ R_wb.T
+
+    
+    

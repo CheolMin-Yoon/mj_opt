@@ -1,6 +1,7 @@
 import numpy as np
 import pinocchio as pin
 
+
 class FloatingBaseRobotState:
     '''
     nq = 36 (7+29), nv = 35, nu = 29

@@ -74,7 +74,7 @@ class Mujoco_Kernel:
 
     # ===== command =====
     def apply_torque_pin(self, tau_pin):
-        tau_act = tau_pin[6:]                # (29,)
+        tau_act = tau_pin[:]                # (29,)
         self.data.ctrl[self._tau_perm] = tau_act
 
     def apply_position_pin(self, q_des_pin):
