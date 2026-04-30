@@ -104,3 +104,12 @@ class MotionPlanner:
             xi_d_world[i] = Ad @ xi_d[i]
 
         return t_s, pos, rot, xi_d_world
+    
+    def raibert_footstep(self, p_hip, v_com, v_des, T_stance, k=0.03):
+        '''
+        p_hip은 wrapper의 self.L_hip_placement 또는 data.oMf[L_hip].translation에서.
+        '''
+        return p_hip + 0.5 * T_stance * v_com + k * (v_com - v_des)
+
+    
+

@@ -68,22 +68,3 @@ class FloatingBaseRobotState:
 
     def get_floating_base_dq(self):
         return np.concatenate([getattr(self, attr) for attr in self.SLICES_DQ.keys()])
-    
-    # 피노키오는 x y z w
-    def quat_2_rpy(self):
-        qx, qy, qz, qw = self.humanoid_base_quad
-        pin_quat = pin.Quaternion(np.array([qw, qx, qy, qz])) 
-        R = pin_quat.toRotationMatrix()
-        rpy = pin.rpy.matrixToRpy(R)
-        roll, pitch, yaw = np.array(rpy).reshape(3, )
-        return np.array([roll, pitch, yaw])
-    
-    def rpy_2_quat(self, roll, pitch, yaw):
-        cr,sr = np.cos(roll/2), np.sin(roll/2)
-        cp,sp = np.cos(pitch/2), np.sin(pitch/2)
-        cy,sy = np.cos(yaw/2), np.sin(yaw/2)
-        qx = sr*cp*cy - cr*sp*sy
-        qy = cr*sp*cy + sr*cp*sy
-        qz = cr*cp*sy - sr*sp*cy
-        qw = cr*cp*cy + sr*sp*sy
-        return np.array([qx, qy, qz, qw])

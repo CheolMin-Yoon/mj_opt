@@ -2,7 +2,7 @@ import numpy as np
 import mujoco
 
 
-class ViewerOverlay:
+class Visualizer:
     """
     mujoco viewer.user_scn에 디버그용 시각화 (좌표계, 궤적, 접촉력)을 그린다.
     매 렌더 프레임 시작 시 reset() 호출 후 draw_* 호출.

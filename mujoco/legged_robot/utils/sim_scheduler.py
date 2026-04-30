@@ -2,7 +2,7 @@ import time
 import mujoco
 import mujoco.viewer
 
-from .viewer_overlay import ViewerOverlay
+from .visualizer import Visualizer
 
 
 class SimScheduler:
@@ -23,13 +23,13 @@ class SimScheduler:
     def run(self, on_control, on_render=None, duration=None):
         """
         on_control(sim_time) -> None: data.ctrl 세팅하는 콜백
-        on_render(sim_time, overlay) -> None: 오버레이 그리기 콜백
+        on_render(sim_time, visu) -> None: 오버레이 그리기 콜백
         duration: None이면 viewer 닫을 때까지
         """
         with mujoco.viewer.launch_passive(self.model, self.data,
                                           show_left_ui=True,
-                                          show_right_ui=False) as viewer:
-            overlay = ViewerOverlay(viewer)
+                                          show_right_ui=True) as viewer:
+            view = Visualizer(viewer)
             next_ctrl = next_render = self.sim_time
             wall_start = time.perf_counter()
 
@@ -43,9 +43,9 @@ class SimScheduler:
                     mujoco.mj_step(self.model, self.data)
                     self.sim_time += self.physics_dt
 
-                overlay.reset()
+                view.reset()
                 if on_render is not None:
-                    on_render(self.sim_time, overlay)
+                    on_render(self.sim_time, view)
                 viewer.sync()
                 next_render += self.render_dt
 

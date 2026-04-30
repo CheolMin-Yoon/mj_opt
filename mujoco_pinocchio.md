@@ -59,3 +59,10 @@ https://github.com/stack-of-tasks/pinocchio
 https://github.com/ozkannceylan/mujoco-robotics-lab
 https://github.com/elijah-waichong-chan/go2-convex-mpc
 https://github.com/Shunichi09/PythonLinearNonlinearControl
+
+
+### To Do Lists
+1. motion planner에 Raibert Heurstic 추가
+2. Visualizer.py에 Convex hull 시각화함수 추가 -> Graham scan
+3. gait, swing phase planner 추가
+4. WBC 튜닝

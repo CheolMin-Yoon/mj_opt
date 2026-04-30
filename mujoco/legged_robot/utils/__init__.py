@@ -1,4 +1,4 @@
-from .viewer_overlay import ViewerOverlay
+from .visualizer import Visualizer
 from .sim_scheduler import SimScheduler
 from .plot_helpers import (
     plot_ee_tracking,

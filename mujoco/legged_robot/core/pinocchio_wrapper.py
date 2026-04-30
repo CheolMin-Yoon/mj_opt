@@ -68,7 +68,6 @@ class Pinocchio_Wrapper:
         pin.computeJointJacobiansTimeVariation(self.model, self.data, q, dq)
         pin.ccrba(self.model, self.data, q, dq)
         pin.centerOfMass(self.model, self.data, q, dq)
-        pin.computeTotalMass(self.model)
 
         # world_T_base 업데이트
         self.oMb = self.data.oMf[self.fid["base"]]   
