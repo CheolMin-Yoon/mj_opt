@@ -1,4 +1,3 @@
-from .motion_planner import MotionPlanner
 from .whole_body_controller import WholeBodyTorqueGenerator, CoMDynamics, ForceOptimizerProx, WholeBodyController
-from .lipm_control import SimplifiedModelControl
-from .trajectory_optimizer import TrajectoryOptimization
+from .task_space_controller import TaskSpaceController
+from .motion_planner import HumanoidOnlineMotionPlanner

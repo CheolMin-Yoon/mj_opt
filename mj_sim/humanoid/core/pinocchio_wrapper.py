@@ -3,6 +3,19 @@ import pinocchio as pin
 from pinocchio.robot_wrapper import RobotWrapper
 from .floating_base_robot_state import FloatingBaseRobotState
 
+# G1 frame — URDF link
+G1_FRAMES = {
+    "L_foot": "left_ankle_roll_link",
+    "R_foot": "right_ankle_roll_link",
+    "L_hand": "left_rubber_hand",
+    "R_hand": "right_rubber_hand",
+    "L_hip" : "left_hip_pitch_link",
+    "R_hip" : "right_hip_pitch_link",
+    "L_sh"  : "left_shoulder_pitch_link",
+    "R_sh"  : "right_shoulder_pitch_link",
+    "base"  : "pelvis",
+}
+
 
 class Pinocchio_Wrapper:
 
@@ -22,46 +35,33 @@ class Pinocchio_Wrapper:
         self.mass = pin.computeTotalMass(self.model)
         self.current_state = FloatingBaseRobotState()
         
-        # 딕셔너리에 의존성 존재
-        names = {
-            "L_foot": "left_ankle_roll_link",
-            "R_foot": "right_ankle_roll_link",
-            "L_hand": "left_rubber_hand",
-            "R_hand": "right_rubber_hand",
-            "L_hip":  "left_hip_pitch_link",
-            "R_hip":  "right_hip_pitch_link",
-            "L_sh":   "left_shoulder_pitch_link",
-            "R_sh":   "right_shoulder_pitch_link",
-            "base":   "pelvis",
-        }
-        self.fid = {k: self.model.getFrameId(v) for k, v in names.items()}
+        self.fid = {k: self.model.getFrameId(v) for k, v in G1_FRAMES.items()}
 
-        # 초기 상태 가져오기 (URDF로부터)
+        # 초기 자세
         q_neutral = pin.neutral(self.model)
         pin.framesForwardKinematics(self.model, self.data, q_neutral)
 
-        # 하드웨어 정보 저장
+        # SE3 
         oMb_neutral = self.data.oMf[self.fid["base"]]
         self.L_hip_placement = oMb_neutral.actInv(self.data.oMf[self.fid["L_hip"]]).copy()
         self.R_hip_placement = oMb_neutral.actInv(self.data.oMf[self.fid["R_hip"]]).copy()
         self.L_shoulder_placement = oMb_neutral.actInv(self.data.oMf[self.fid["L_sh"]]).copy()
         self.R_shoulder_placement = oMb_neutral.actInv(self.data.oMf[self.fid["R_sh"]]).copy()
         
-        # 초기 상태 저장
-        self.q_init = self.current_state.get_floating_base_q()
-        self.dq_init = self.current_state.get_floating_base_dq()
-        self._dq_cache = np.zeros(self.nv)
+        # 초기 상태
+        self.q_init = q_neutral.copy()
+        self.dq_init = np.zeros(self.nv)
     
-        # 마지막에 있어야함
         self.update_model(self.q_init, self.dq_init)
 
     
-    # pinocchio 업데이트
+    # pin model update
     def update_model(self, q, dq):
         self._q  = q
         self._dq = dq
-        self._dq_cache = dq
-        pin.forwardKinematics(self.model, self.data, q, dq)
+        self.current_state.q = q
+        self.current_state.dq = dq
+        pin.forwardKinematics(self.model, self.data, q)
         pin.updateFramePlacements(self.model, self.data)
         pin.computeAllTerms(self.model, self.data, q, dq)
         pin.computeJointJacobians(self.model, self.data, q)
@@ -69,95 +69,86 @@ class Pinocchio_Wrapper:
         pin.ccrba(self.model, self.data, q, dq)
         pin.centerOfMass(self.model, self.data, q, dq)
 
-        # SE3 캐시 (data.oMf는 view → copy 없이 사용 가능)
+        # SE3
         self.oMb      = self.data.oMf[self.fid["base"]]
         self.oM_Lfoot = self.data.oMf[self.fid["L_foot"]]
         self.oM_Rfoot = self.data.oMf[self.fid["R_foot"]]
         self.oM_Lhand = self.data.oMf[self.fid["L_hand"]]
         self.oM_Rhand = self.data.oMf[self.fid["R_hand"]]
 
-        # CoM (data.com[0], data.vcom[0]은 view → copy 안 함)
-        self.pos_com_world = self.data.com[0]
-        self.vel_com_world = self.data.vcom[0]
-
-        # Centroidal momentum (view)
-        self.Ag = self.data.Ag
-        self.hg = self.data.hg
-
-        # SO3 (rotation은 view 반환)
+        # SO3
         self.R_body_to_world = self.oMb.rotation
         self.R_world_to_body = self.R_body_to_world.T
-    
-    # 동역학 계산 (view 반환 — 호출자에서 수정 금지, 다음 update_model까지만 유효)
-    def compute_dynamics_term(self):
-        return self.data.M, self.data.g, self.data.nle
 
-    # 현재 q, dq 직접 접근 (current_state.get_floating_base_q() 대체)
-    @property
-    def q(self):
-        return self._q
 
     @property
-    def dq(self):
-        return self._dq
+    def q(self):  return self._q
+    @property
+    def dq(self): return self._dq
+    @property
+    def M(self): return self.data.M
+    @property
+    def M_inv(self): return pin.computeMinverse(self.model, self.data, self._q)
+    @property
+    def C(self): return pin.computeCoriolisMatrix(self.model, self.data, self._q, self._dq)
+    @property
+    def nle(self): return self.data.nle
+    @property
+    def g(self): return self.data.g
+    @property
+    def pos_com_world(self): return self.data.com[0]
+    @property
+    def vel_com_world(self): return self.data.vcom[0]
+    @property
+    def hg(self): return self.data.hg
+    @property
+    def Ag(self): return self.data.Ag
+    @property
+    def angular_momentum(self): return self.data.hg[3:6]
+    @property
+    def R_z(self):
+        """Base의 Yaw 회전만 추출한 SO3 행렬"""
+        yaw = np.arctan2(self.R_body_to_world[1, 0], self.R_body_to_world[0, 0])
+        cos_y, sin_y = np.cos(yaw), np.sin(yaw)
+        return np.array([[cos_y, -sin_y, 0], [sin_y, cos_y, 0], [0, 0, 1]])
+    
 
-    def compute_centroidal_term(self):
-        return self.Ag, self.hg 
-    
-    def angular_momentum(self):
-        return self.hg[3:6] 
-    
-    # 자코비안 계산 
     def _J(self, fid, ref):
         return pin.getFrameJacobian(self.model, self.data, fid, ref)
-    
-    # 월드 기준 정렬된 자코비안 (Modern Robotics의 space Jacobian이 아니다)
+
     def J_world(self, key: str):
         J = self._J(self.fid[key], pin.ReferenceFrame.LOCAL_WORLD_ALIGNED)
-        return J[:3], J[3:] # (lin, ang)
-    
-    # 바디 기준 자코비안 (Modern Robotics의 J_body랑 동일하다)
+        return J
+
     def J_body(self, key: str):
         J = self._J(self.fid[key], pin.ReferenceFrame.LOCAL)
-        return J[:3], J[3:]
-    
-    # CoM Jacobian
+        return J
+
     def J_com(self):
         return pin.jacobianCenterOfMass(self.model, self.data, self._q)
-    
-    # dJ 
+
     def Jdot_dq_world(self, key: str):
         Jd = pin.getFrameJacobianTimeVariation(
             self.model, self.data, self.fid[key],
             pin.ReferenceFrame.LOCAL_WORLD_ALIGNED
         )
-        return Jd @ self._dq_cache
-
-    # 월드 기준 엔드이펙터들의 Transformation Matrix (SE3)
-    def get_ee_placement_in_world(self):
-        return (self.oM_Lfoot.copy(), self.oM_Rfoot.copy(),
-                self.oM_Lhand.copy(), self.oM_Rhand.copy())
+        return Jd @ self._dq
     
-    #특정 프레임의 모멘트 암 반환 
     def get_moment_arm_in_world(self, key: str):
         fid = self.fid[key]
         p_ee = self.data.oMf[fid].translation
         moment_arm = p_ee - self.pos_com_world
         return moment_arm
     
-    # 월드 기준 엔드이펙터의 위치/회전(SE3) 및 선형/각속도 반환
-    def ee_state_world(self, key: str):
+    def get_ee_state_world(self, key: str):
         fid = self.fid[key]
-        oMf = self.data.oMf[fid].copy()
+        oMf = self.data.oMf[fid]
         twist = pin.getFrameVelocity(self.model, self.data, fid, pin.ReferenceFrame.LOCAL_WORLD_ALIGNED)
-        return oMf, twist.linear.copy(), twist.angular.copy()
+        return oMf, twist.linear, twist.angular
     
-    # 
     def world_to_base_frame(self, pos_world):
-        """world 좌표계 pos → base local frame pos."""
         return self.R_world_to_body @ (pos_world - self.oMb.translation)
-    
-    # (N, 3) world 궤적 → base frame 궤적
+
     def trajectory_world_to_base(self, traj_world):
         p_base = self.oMb.translation
         R_wb   = self.R_world_to_body

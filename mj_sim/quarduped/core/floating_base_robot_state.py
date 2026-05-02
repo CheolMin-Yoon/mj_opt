@@ -42,11 +42,11 @@ class FloatingBaseRobotState:
     def q(self):
         return self._q
     @q.setter
-    def q(self, q_new):
-        np.copyto(self._q, q_new)
+    def q(self, q_update):
+        np.copyto(self._q, q_update)
     @property
     def dq(self):
         return self._dq
     @dq.setter
-    def dq(self, dq_new):
-        np.copyto(self._dq, dq_new)
+    def dq(self, dq_update):
+        np.copyto(self._dq, dq_update)

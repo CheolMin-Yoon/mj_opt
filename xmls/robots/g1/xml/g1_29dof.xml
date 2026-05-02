@@ -523,4 +523,9 @@
     <accelerometer name="secondary_imu_acc" site="secondary_imu" noise="1e-2" cutoff="157"/>
   </sensor>
 
+  <keyframe>
+    <!-- 순서: Base Pos(3) + Base Quat(4) + L_Leg(6) + R_Leg(6) + Waist(3) + L_Arm(7) + R_Arm(7) -->
+    <key name="init_pose" qpos="0 0 0.755 1 0 0 0 -0.312 0 0 0.669 -0.363 0 -0.312 0 0 0.669 -0.363 0 0.073 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" />
+  </keyframe>
+
 </mujoco>

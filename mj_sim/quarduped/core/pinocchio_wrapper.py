@@ -142,12 +142,12 @@ class Pinocchio_Wrapper:
     def J_world(self, key: str):
         """world-aligned Jacobian. (lin(3,nv), ang(3,nv)) 반환."""
         J = self._J(self.fid[key], pin.ReferenceFrame.LOCAL_WORLD_ALIGNED)
-        return J[:3], J[3:]
+        return J
 
     def J_body(self, key: str):
         """body Jacobian. (lin(3,nv), ang(3,nv)) 반환."""
         J = self._J(self.fid[key], pin.ReferenceFrame.LOCAL)
-        return J[:3], J[3:]
+        return J
 
     def J_com(self):
         return pin.jacobianCenterOfMass(self.model, self.data, self._q)

@@ -3,7 +3,12 @@ import pinocchio as pin
 from scipy.interpolate import CubicSpline
 
 
-class MotionPlanner:
+class HumanoidOnlineMotionPlanner:
+
+    PHASE_OFFSET = np.array([0.0, 0.5])   
+    HEIGHT_SWING = 0.08
+    LEG_KEYS     = ["L_foot", "R_foot"]
+    LEG_IDX      = {k: i for i, k in enumerate(LEG_KEYS)}
 
 
     def __init__(self, default_step_height=0.05):
@@ -72,6 +77,81 @@ class MotionPlanner:
         acc = np.array([acc_xy[0], acc_xy[1], acc_z])
 
         return pos, vel, acc
+    
+    # 인자에 phase와 swing_duration 추가
+    def compute_swing_traj_and_touchdown_humanoid(self, humanoid_model, leg: str, phase: float, swing_duration: float):
+        """휴머노이드용 발자국 착지점 및 궤적 계산 (LIPM & Capture Point 기반)"""
+        
+        # 1. 로봇 상태 가져오기
+        base_pos = humanoid_model.current_config.base_pos
+        pos_com_world = humanoid_model.pos_com_world
+        vel_com_world = humanoid_model.vel_com_world
+        R_z = humanoid_model.R_z
+        yaw_rate = humanoid_model.yaw_rate_des_world
+
+        # 2. 골반(Hip) 위치 계산
+        hip_offset = humanoid_model.get_hip_offset(leg) 
+        body_pos = np.array([base_pos[0], base_pos[1], 0])
+        hip_pos_world = body_pos + R_z @ hip_offset
+
+        # ⚠️ 중요: p_start는 매 틱마다 바뀌는 현재 발 위치가 아니라, '이륙(Take-off) 시점의 초기 발 위치'여야 합니다.
+        # 만약 이 함수가 매 틱 호출된다면, foot_pos는 제어기 외부에 저장해둔 '스윙 시작점'을 사용해야 베지어 곡선이 튀지 않습니다.
+        [foot_pos, foot_vel] = humanoid_model.get_single_foot_state_in_world(leg)
+
+        # 3. 제어 목표치
+        x_vel_des = humanoid_model.x_vel_des_world
+        y_vel_des = humanoid_model.y_vel_des_world
+
+        # 4. LIPM Capture Point 계산
+        h_com = pos_com_world[2]
+        omega = np.sqrt(9.81 / h_com) 
+        time_constant = 1.0 / omega   
+
+        k_v_x = time_constant * 1.1  
+        k_v_y = time_constant * 1.0  
+        k_p_x = 0.05
+        k_p_y = 0.05
+
+        pos_norminal_term = [hip_pos_world[0], hip_pos_world[1], 0.02]
+
+        pos_correction_term = [
+            k_p_x * (pos_com_world[0] - humanoid_model.x_pos_des_world), 
+            k_p_y * (pos_com_world[1] - humanoid_model.y_pos_des_world), 
+            0
+        ]
+
+        vel_correction_term = [
+            k_v_x * (vel_com_world[0] - x_vel_des), 
+            k_v_y * (vel_com_world[1] - y_vel_des), 
+            0
+        ]
+        
+        dtheta = yaw_rate * time_constant
+        r_xy = np.array([pos_norminal_term[0], pos_norminal_term[1]]) - base_pos[0:2]
+        rotation_correction_term = np.array([
+            -dtheta * r_xy[1],
+            dtheta * r_xy[0],
+            0.0
+        ])
+
+        pos_touchdown_world = (
+            np.array(pos_norminal_term)
+            + np.array(pos_correction_term)
+            + np.array(vel_correction_term)
+            + np.array(rotation_correction_term)
+        )
+        
+        # 5. 스윙 궤적 생성 (입력받은 phase와 swing_duration 사용)
+        # 속도와 가속도 데이터도 제어기에 넘겨주면 Task-Space 제어 시 훨씬 안정적입니다.
+        pos_foot, vel_foot, acc_foot = self.compute_bezier_trajectory(
+            phase=phase, 
+            p_start=foot_pos,   # 주의: 스윙 시작 시점의 고정된 위치를 넘기는 것을 권장
+            p_end=pos_touchdown_world, 
+            duration=swing_duration, 
+            step_height=self.HEIGHT_SWING
+        )
+        
+        return pos_foot, vel_foot, acc_foot, pos_touchdown_world
 
 
     def compute_se3_spline_interpolator(self, wp_pos, wp_rot, seg_duration, dt):
@@ -104,98 +184,3 @@ class MotionPlanner:
             xi_d_world[i] = Ad @ xi_d[i]
 
         return t_s, pos, rot, xi_d_world
-    
-
-    def build_foot_trajectories(self, footsteps, init_lf, init_rf,
-                                step_time, dsp_time, init_dsp_extra,
-                                dt, step_height):
-        """
-        DCM footstep 시퀀스에 맞춰 좌/우 발 (N,3) 위치/속도/가속도 배열을 사전 계산.
-        SSP 구간은 compute_bezier_trajectory 사용 → 가속도까지 연속.
-
-        ssp_time(=step_time-dsp_time)이 0 이하면 ZeroDivision → assert.
-
-        Parameters
-        ----------
-        footsteps        : List[(x, y)] 발자국 위치 (그대로 사용)
-        init_lf, init_rf : (3,) 초기 발 위치 (world)
-        step_time        : 한 스텝 총 시간
-        dsp_time         : 한 스텝 내 DSP(양발지지) 시간
-        init_dsp_extra   : 첫 스텝의 추가 DSP
-        dt               : 샘플 주기
-        step_height      : swing 최고 높이
-
-        Returns
-        -------
-        l_pos, r_pos : (N, 3) world 위치
-        l_vel, r_vel : (N, 3) world 속도
-        l_acc, r_acc : (N, 3) world 가속도
-        """
-        assert step_time - dsp_time > 0, \
-            f"ssp_time must be > 0, got step_time={step_time}, dsp_time={dsp_time}"
-
-        n_steps = len(footsteps)
-
-        def step_t(i):  return step_time + (init_dsp_extra if i == 0 else 0.0)
-        def dsp_t(i):   return dsp_time  + (init_dsp_extra if i == 0 else 0.0)
-        def n_samp(i):  return int(step_t(i) / dt)
-
-        N_total = sum(n_samp(i) for i in range(n_steps))
-        l_pos = np.zeros((N_total, 3));  r_pos = np.zeros((N_total, 3))
-        l_vel = np.zeros((N_total, 3));  r_vel = np.zeros((N_total, 3))
-        l_acc = np.zeros((N_total, 3));  r_acc = np.zeros((N_total, 3))
-
-        # 현재 발 위치 (stance 발의 이전 착지점)
-        l_now, r_now = init_lf.copy(), init_rf.copy()
-        ground_l, ground_r = init_lf[2], init_rf[2]
-
-        idx_offset = 0
-        for i in range(n_steps):
-            ns    = n_samp(i)
-            dsp_i = dsp_t(i)
-            ssp_i = step_t(i) - dsp_i
-            is_right_swing = (i % 2 == 0)
-
-            # swing target = footsteps[i+1] (footsteps의 x, y 그대로 사용)
-            if i + 1 < n_steps:
-                fx, fy = footsteps[i + 1]
-                swing_target = np.array([fx, fy,
-                                         ground_r if is_right_swing else ground_l])
-            else:
-                swing_target = None
-            swing_start = r_now if is_right_swing else l_now
-
-            for k in range(ns):
-                t_local = k * dt
-                idx = idx_offset + k
-
-                if t_local < dsp_i or swing_target is None:
-                    # DSP 또는 마지막 스텝: 양발 정지
-                    l_pos[idx] = l_now;  r_pos[idx] = r_now
-                    # vel/acc는 0 (np.zeros 기본값)
-                    continue
-
-                phase = np.clip((t_local - dsp_i) / ssp_i, 0.0, 1.0)
-                p, v, a = self.compute_bezier_trajectory(
-                    phase, swing_start, swing_target, ssp_i, step_height
-                )
-
-                if is_right_swing:
-                    r_pos[idx], r_vel[idx], r_acc[idx] = p, v, a
-                    l_pos[idx] = l_now
-                else:
-                    l_pos[idx], l_vel[idx], l_acc[idx] = p, v, a
-                    r_pos[idx] = r_now
-
-            # 다음 스텝 시작 시 swing 발이 새 위치에 착지
-            if swing_target is not None:
-                if is_right_swing:
-                    r_now = swing_target.copy()
-                else:
-                    l_now = swing_target.copy()
-            idx_offset += ns
-
-        return l_pos, r_pos, l_vel, r_vel, l_acc, r_acc
-
-    
-
