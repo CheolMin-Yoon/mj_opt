@@ -26,6 +26,7 @@ class TaskSpaceController:
         self.pose_error = np.zeros(6)
         self.twist_error = np.zeros(6)
         self.desired_force = np.zeros(6)
+
         
     def compute_error(self, current_pos, current_R, current_twist, target_pos, target_R, target_twist):
         # pose error

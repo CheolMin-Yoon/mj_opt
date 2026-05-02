@@ -42,7 +42,7 @@ class TrajectoryGenerator:
         vel[-1] = np.zeros(3)
         acc[0] = np.zeros(3)
         acc[-1] = np.zeros(3)
-        '''
+        
         for i in range(1, self.N-1):
             dt_prev = self.times[i] - self.times[i-1]
             dt_next = self.times[i+1] - self.times[i]
@@ -51,7 +51,7 @@ class TrajectoryGenerator:
             v_next = (self.wp_list[i+1] - self.wp_list[i]) / dt_next
             v_prev = (self.wp_list[i] - self.wp_list[i-1]) / dt_prev
             acc[i] = (v_next - v_prev) / ((dt_prev + dt_next) / 2)
-        '''
+        
         return vel, acc
     
     # wp to wp 간 초기 p0, v0, a0, 도달 시 pf, vf, af, 국소 도달 시간 T로 5차 다항식 계수 계산

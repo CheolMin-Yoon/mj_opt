@@ -111,6 +111,10 @@ class Pinocchio_Wrapper:
     @property
     def M(self): return self.data.M
     @property
+    def M_inv(self): return pin.computeMinverse(self.model, self.data, self._q)
+    @property
+    def C(self): return pin.computeCoriolisMatrix(self.model, self.data, self._q, self._dq)
+    @property
     def nle(self): return self.data.nle
     @property
     def g(self): return self.data.g

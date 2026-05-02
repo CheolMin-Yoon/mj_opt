@@ -1,5 +1,6 @@
 from .visualizer import Visualizer
 from .sim_scheduler import SimScheduler
+from .data_logger import DataLogger
 from .plot_helpers import (
     plot_ee_tracking,
     plot_velocity_tracking,
