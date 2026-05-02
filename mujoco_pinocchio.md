@@ -64,23 +64,4 @@ https://github.com/Shunichi09/PythonLinearNonlinearControl
 4. WBC 튜닝
 
 ### git 명령어들
-# 로컬 master 브랜치를 서버(origin)에 업로드하고 연결
-git push -u origin master
-
-### 구형 브랜치 삭제
-
-# (선택사항) 서버와 로컬의 목록 동기화
-git fetch --prune
-
-### 새로운 개발 할 때 
-# master에서 갈라져 나온 새로운 dev 브랜치 생성 및 이동
-git checkout master
-git checkout -b dev
-
-# 새로운 dev 브랜치를 서버에도 반영
-git push -u origin dev
-
-### dev에서 개발하고 master에 병합
-git checkout master
-git merge dev
-git push origin master
+#
