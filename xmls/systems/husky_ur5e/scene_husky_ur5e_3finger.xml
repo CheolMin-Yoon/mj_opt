@@ -1,0 +1,10 @@
+<mujoco model="husky with ur5e 3finger scene">
+
+  <include file="husky_ur5e_3finger.xml" />
+
+  <include file="../../common/objects/floor_sky.xml" />
+
+  <worldbody>
+  </worldbody>
+
+</mujoco>

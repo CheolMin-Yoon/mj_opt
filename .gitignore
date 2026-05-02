@@ -1,0 +1,63 @@
+# =========================
+# Python / Machine Learning
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+
+# 모델 가중치 및 대용량 데이터 파일
+*.pt
+*.pth
+*.safetensors
+*.onnx
+*.h5
+*.pb
+datasets/
+data/
+
+# =========================
+# ROS 2 Workspace
+# =========================
+build/
+install/
+log/
+*.urdf.xacro.generated
+
+# =========================
+# C++ / Build Artifacts
+# =========================
+*.o
+*.so
+*.out
+*.a
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# =========================
+# OS / IDE Files
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+FrJoCo
+study
+pinocchio
+mujoco-robotics-lab
+python
+
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+build/
+dist/
+*.egg-info/
