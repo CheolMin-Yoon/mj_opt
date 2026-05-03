@@ -1,14 +1,17 @@
 '''
 '''
-
 import numpy as np
 import pinocchio as pin
-from core import pinocchio_wrapper
+    
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from core import Pinocchio_Wrapper
+    from control import GaitScheduler, TrajOptimizer
 
 
 class TaskSpaceController:
-    def __init__(self, pinocchio_wrapper):
-        self.wrapper = pinocchio_wrapper # pin wrapper 활용
+    def __init__(self, wrapper: 'Pinocchio_Wrapper'):
+        self.wrapper = wrapper # pin wrapper 활용
         
         # 제어 파라미터
         self.I = np.eye(6)

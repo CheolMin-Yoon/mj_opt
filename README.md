@@ -2,6 +2,18 @@
 
 이 레포지토리는 MuJoCo와 Pinocchio를 활용한 로봇 제어 프레임워크입니다. `mj_sim` 폴더 내에 로봇의 종류에 따라 모듈화되어 있습니다.
 
+#### 작성원칙!!
+
+1. 계산하는 함수들은 무조건 compute_ ~로 작성
+2. pinocchio나 mujoco로부터 가져오는 함수들은 무조건 get_ ~ 로 작성
+3. 인자가 필요없는 단일 요소는 @property로 작성
+4. 변수명 -> 현재값 curr_com_pos, 오차값 err_com_pos, 목표값 des_com_pos, 피드포워드 tau_ff, 피드백 tau_fb
+5. 
+
+
+
+
+
 ---
 
 ### 1. Manipulator (`mj_sim/manipulator/`)

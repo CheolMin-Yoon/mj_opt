@@ -104,8 +104,8 @@ class LegController:
             idx = LEG_IDX[leg]
             col = idx * 3   # 0,3,6,9 for FL,FR,RL,RR
 
-            J_lin, _ = wrapper.J_world(leg)
-            J3 = J_lin[:, 6:][:, col : col + 3]   # (3, 3) 해당 다리 3DOF
+            J = wrapper.J_world(leg)
+            J3 = J[:3, 6:][:, col : col + 3]   # (3, 3) 해당 다리 3DOF
 
             oMf, v_lin, _ = wrapper.ee_state_world(leg)
             pos_now = oMf.translation

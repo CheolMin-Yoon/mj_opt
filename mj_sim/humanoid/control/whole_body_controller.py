@@ -5,10 +5,12 @@ from scipy.linalg import lstsq
 
 
 # =============================================================================
-# 1. WholeBodyTorqueGenerator  (from whole_body_torque.cpp)
+# 1. WholeBodyTorqueGenerator
 #    G z = f  →  z* = (G^T G + W)^{-1} G^T f  →  tau = z*[nv:]
 # =============================================================================
-
+'''
+발의 wrench와 스윙 발 궤적등을 종합해 tau를 계산하는 클래스
+'''
 class WholeBodyTorqueGenerator:
     """
     Floating-base dynamics + contact constraint 연립으로 tau를 직접 계산.
@@ -91,9 +93,12 @@ class WholeBodyTorqueGenerator:
 
 
 # =============================================================================
-# 2. CoMDynamics  (from com_dynamics.cpp)
+# 2. CoMDynamics
 #    K F = u,  K(6×12), F(12,) = [f_R(3), tau_R(3), f_L(3), tau_L(3)]
 # =============================================================================
+'''
+로봇의 발은 각각 6차원의 wrench를 생성하고 총 12차원을 가진다. 이것과 CoM의 동역학
+'''
 
 class CoMDynamics:
     """
@@ -114,7 +119,7 @@ class CoMDynamics:
         self._D1[:, 0:3] = np.eye(3)   # f_R
         self._D1[:, 6:9] = np.eye(3)   # f_L
 
-    def update(self, pw, ddc_des: np.ndarray, dL: np.ndarray = None):
+    def update(self, pw, des_acc: np.ndarray, dL: np.ndarray = None):
         """
         pw      : Pinocchio_Wrapper (update_model 완료 상태)
         ddc_des : (3,) desired CoM acceleration
@@ -134,12 +139,16 @@ class CoMDynamics:
         self.K[3:6, 3:6]  = np.eye(3)
         self.K[3:6, 6:9]  = pin.skew(r_L)
         self.K[3:6, 9:12] = np.eye(3)
-
-        self.u[0]  = self.m * ddc_des[0]
-        self.u[1]  = self.m * ddc_des[1]
-        self.u[2]  = self.m * ddc_des[2] + self.m * self.g
+        
+        # sum F = m * des_a + mg
+        self.u[0]  = self.m * des_acc[0]
+        self.u[1]  = self.m * des_acc[1]
+        self.u[2]  = self.m * des_acc[2] + self.m * self.g
         self.u[3:] = dL
 
+'''
+넘어지지않기 위한 wrench를 알 때 오른발과 왼발의 힘 분배
+'''
 
 class ForceOptimizerProx:
     """
@@ -239,10 +248,12 @@ class ForceOptimizerProx:
 
 
 # =============================================================================
-# 4. WholeBodyController  (DBFC_core 흐름)
+# 4. WholeBodyController
 #    BalanceTask → CoMDynamics → ForceOptimizer → WholeBodyTorqueGenerator
 # =============================================================================
-
+'''
+총괄 클래스
+'''
 class WholeBodyController:
     """
     DBFC 흐름:

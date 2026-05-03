@@ -95,10 +95,12 @@ class Pinocchio_Wrapper:
     def nle(self): return self.data.nle
     @property
     def g(self): return self.data.g
+    @property 
+    def base_pos(self): return self.data.oMf[self.fid["base"]].translation # (3, )
     @property
-    def pos_com_world(self): return self.data.com[0]
+    def com_pos_world(self): return self.data.com[0] # (3, )
     @property
-    def vel_com_world(self): return self.data.vcom[0]
+    def com_vel_world(self): return self.data.vcom[0] # (3, )
     @property
     def hg(self): return self.data.hg
     @property
@@ -106,8 +108,8 @@ class Pinocchio_Wrapper:
     @property
     def angular_momentum(self): return self.data.hg[3:6]
     @property
-    def R_z(self):
-        """Base의 Yaw 회전만 추출한 SO3 행렬"""
+    def R_z(self): 
+        """Base의 Yaw 회전만 추출한 SO3 행렬""" # (3x3)
         yaw = np.arctan2(self.R_body_to_world[1, 0], self.R_body_to_world[0, 0])
         cos_y, sin_y = np.cos(yaw), np.sin(yaw)
         return np.array([[cos_y, -sin_y, 0], [sin_y, cos_y, 0], [0, 0, 1]])
@@ -153,6 +155,11 @@ class Pinocchio_Wrapper:
         p_base = self.oMb.translation
         R_wb   = self.R_world_to_body
         return (traj_world - p_base) @ R_wb.T
+    
+    def get_hip_offset(self, leg):
+        prefix = 'L' if 'left' in leg.lower() or 'l' == leg.lower() else 'R'
+        placement = getattr(self, f"{prefix}_hip_placement")
+        return placement.translation
 
     
     
