@@ -1,0 +1,40 @@
+name: mj_opt
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.13.15
+  - pip=26.2.1
+  - numpy=2.5.1
+  - scipy=1.18.0
+  - cmake=3.31.8
+  - ninja=1.13.2
+  - make=4.4.1
+  - swig=4.4.1
+  - git=2.55.0
+  - patchelf=0.19.1
+  - pkg-config=0.29.2
+  - ruff=0.16.4
+  - gcc_linux-64=14.4
+  - gxx_linux-64=14.4
+  - jrl-cmakemodules=2.3.0
+  - eigen=5.0.1
+  - eigenpy=3.13.0
+  - libboost-devel=1.90.0
+  - libboost-python-devel=1.90.0
+  - console_bridge=1.0.2
+  - urdfdom=6.0.0
+  - urdfdom_headers=3.0.0
+  - libcoal=3.0.4
+  - coal-python=3.0.4
+  - libsdformat=16.1.0
+  - libgz-math=9.2.0
+  - qhull=2020.2
+  - qhull-static=2020.2
+  - llvm-openmp=22.1.8
+  - pip:
+      - pytest==9.1.1
+
+# CasADi 3.8.0 is installed from the official PyPI wheel after verifying its
+# pinned SHA-256. Pinocchio/cpin 4.1.0 is built from official tag v4.1.0 in
+# this final prefix. Do not add the Conda casadi, pinocchio or ipopt packages.

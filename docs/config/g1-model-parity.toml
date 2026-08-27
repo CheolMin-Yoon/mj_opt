@@ -1,0 +1,158 @@
+schema_version = 1
+date = "2026-08-26"
+status = "diagnostic-only"
+decision = "raw-drop-in-rejected"
+trajectory_equivalence = "blocked-missing-reference-artifact"
+cross_model_acceptance_threshold = "unset"
+evidence_repository = "/home/frlab/research-wiki"
+evidence_revision = "c79accb860e135d0e4bcf7560409d65af6669e71"
+
+[environment]
+role = "historical-model-parity-diagnostic"
+python = "/home/frlab/anaconda3/envs/mj_rl/bin/python"
+python_version = "3.13.15"
+pinocchio_version = "4.1.0"
+cpin_version = "4.1.0"
+casadi_version = "3.8.0"
+mujoco_version = "3.11.0"
+
+[corpus]
+seed = 41
+samples = 5
+native_cpin_atol = 2e-10
+native_cpin_rtol = 2e-10
+cross_model_threshold_frozen = false
+
+[generic_cpin_probe]
+seed = 23
+model = "pinocchio.buildSampleModelHumanoidRandom"
+
+[urdf]
+role = "oracle"
+repository = "/home/frlab/reference/se3_trajopt"
+revision = "1bbadc9573b2989a0f414888d4fa4af137d57db9"
+path = "/home/frlab/reference/se3_trajopt/src/robots/g1/g1/urdf/g1_29dof.urdf"
+sha256 = "d44063d6da3ac4208726c40b55444c2f16f5fb748dcb1e9712a518a1dc8fa775"
+license = "BSD-2-Clause"
+nq = 36
+nv = 35
+njoints = 31
+nframes = 112
+mass_kg = 33.34114202
+already_has_floating_base_joint = true
+
+[mjcf]
+role = "candidate"
+repository = "/home/frlab/reference/mujoco_menagerie"
+revision = "71f066ad0be9cd271f7ed58c030243ef157af9f4"
+path = "/home/frlab/reference/mujoco_menagerie/unitree_g1/g1.xml"
+sha256 = "3c2616550a31f33e84d3c80b8e913ac5618c8888019b0c9490dae93493e647f3"
+license = "BSD-3-Clause"
+nq = 36
+nv = 35
+njoints = 31
+nframes = 65
+mass_kg = 33.341142
+actuator_semantics = "position"
+mujoco_free_quaternion_order = "wxyz"
+pinocchio_free_quaternion_order = "xyzw"
+
+[loader]
+urdf = "pinocchio.buildModelFromUrdf"
+mjcf = "pinocchio.buildModelFromMJCF"
+casadi_cast = "pinocchio.casadi.Model(native_model)"
+build_models_from_mjcf_contacts = false
+
+[normalization]
+permanent_asset_edit = false
+copy_native_model_fields_from_urdf = [
+  "armature",
+  "rotorInertia",
+  "friction",
+  "damping",
+  "lowerPositionLimit",
+  "upperPositionLimit",
+  "velocityLimit",
+  "effortLimit",
+]
+synthesize_contact_frames = true
+
+[[contact_frame]]
+name = "left_foot_upper_left"
+parent = "left_ankle_roll_link"
+translation_m = [0.12, 0.03, -0.03]
+
+[[contact_frame]]
+name = "left_foot_upper_right"
+parent = "left_ankle_roll_link"
+translation_m = [0.12, -0.03, -0.03]
+
+[[contact_frame]]
+name = "left_foot_lower_left"
+parent = "left_ankle_roll_link"
+translation_m = [-0.05, 0.025, -0.03]
+
+[[contact_frame]]
+name = "left_foot_lower_right"
+parent = "left_ankle_roll_link"
+translation_m = [-0.05, -0.025, -0.03]
+
+[[contact_frame]]
+name = "right_foot_upper_left"
+parent = "right_ankle_roll_link"
+translation_m = [0.12, 0.03, -0.03]
+
+[[contact_frame]]
+name = "right_foot_upper_right"
+parent = "right_ankle_roll_link"
+translation_m = [0.12, -0.03, -0.03]
+
+[[contact_frame]]
+name = "right_foot_lower_left"
+parent = "right_ankle_roll_link"
+translation_m = [-0.05, 0.025, -0.03]
+
+[[contact_frame]]
+name = "right_foot_lower_right"
+parent = "right_ankle_roll_link"
+translation_m = [-0.05, -0.025, -0.03]
+
+[[contact_frame]]
+name = "left_hand_point_contact"
+parent = "left_rubber_hand"
+translation_m = [0.05, 0.0, 0.0]
+
+[[contact_frame]]
+name = "right_hand_point_contact"
+parent = "right_rubber_hand"
+translation_m = [0.05, 0.0, 0.0]
+
+[observed.native_cpin]
+urdf_g1_regression = "5-tests-pass-at-2e-10"
+generic_probe_rnea_or_derivative_max_abs = 9.237e-14
+mjcf_rnea_max_abs = 3.552713678800501e-15
+mjcf_frame_position_max_abs_m = 2.7755575615628914e-17
+mjcf_integrate_max_abs = 1.734723475976807e-18
+mjcf_difference_max_abs = 7.806255641895632e-18
+
+[observed.same_mjcf_mujoco_pinocchio]
+velocity_profile = "zero"
+mass_matrix_max_abs = 2.6645352591003757e-15
+bias_max_abs = 5.684341886080802e-14
+
+[observed.raw_cross_model]
+joint_position_max_abs_m = 3.00392200067468e-7
+joint_rotation_max_abs_rad = 1.4562937677189506e-6
+mass_matrix_max_abs = 0.010002342999887004
+nonlinear_effects_max_abs = 5.0592564269535956e-5
+rnea_max_abs = 0.01065769946176598
+com_max_abs_m = 5.302759848758998e-8
+
+[observed.normalized_cross_model]
+contact_position_max_abs_m = 3.0455193253363746e-7
+contact_rotation_max_abs_rad = 1.4562937677116801e-6
+contact_lwa_jacobian_max_abs = 1.4559848618310098e-6
+mass_matrix_max_abs = 4.3678825528470355e-5
+nonlinear_effects_max_abs = 5.0592564269535956e-5
+rnea_max_abs = 4.683247401282564e-5
+com_max_abs_m = 5.302759848758998e-8

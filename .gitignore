@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+.venv/
+.conda/
+build/
+dist/
+*.egg-info/
+outputs/
+logs/
+ipopt_output.txt
